@@ -1,0 +1,8 @@
+*.exe
+*.pdb
+*.obj
+*.rcgu.o
+/target/
+Cargo.lock
+selftest.txt
+.DS_Store

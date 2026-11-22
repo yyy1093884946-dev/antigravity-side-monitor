@@ -1,0 +1,16 @@
+[package]
+name = "antigravity-side-monitor"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "Ultra-lightweight, 100% read-only native Rust Win32 HUD capsule docked inside Google Antigravity's topbar for real-time Context Usage, TPS, and Cache Hit Rate."
+
+[[bin]]
+name = "AntigravityMonitor"
+path = "main.rs"
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+panic = "abort"
+strip = true
