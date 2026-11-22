@@ -1121,6 +1121,16 @@ fn format_compact(v: u64) -> String {
     }
 }
 
+fn format_cap_label(cap: u64) -> String {
+    match cap {
+        200_000 => "200K".to_string(),
+        256_000 => "256K".to_string(),
+        512_000 => "512K".to_string(),
+        1_000_000 => "1M".to_string(),
+        _ => format_compact(cap),
+    }
+}
+
 fn color_by_context(pct: f64) -> u32 {
     if pct >= 85.0 {
         argb(255, 239, 68, 68) // #EF4444
@@ -1194,7 +1204,7 @@ struct AppState {
 static mut G_STATE: *mut AppState = null_mut();
 static IN_SYNC: AtomicBool = AtomicBool::new(false);
 
-const CAP_PRESETS: [u64; 3] = [256_000, 1_000_000, 200_000];
+const CAP_PRESETS: [u64; 4] = [256_000, 512_000, 1_000_000, 200_000];
 
 impl AppState {
     fn current_cap(&self) -> u64 {
@@ -1631,7 +1641,7 @@ impl AppState {
         );
 
         let trans_lbl = if self.transparent_mode { "同色" } else { "透明" };
-        let cap_lbl = format_compact(cap);
+        let cap_lbl = format_cap_label(cap);
         let buttons = [
             (w - 134.0 * s, 36.0 * s, trans_lbl),
             (w - 94.0 * s, 40.0 * s, cap_lbl.as_str()),
@@ -1690,9 +1700,9 @@ impl AppState {
             false,
         );
         let ctx_val = if snap.has_data {
-            format!("{} / {} ({:.1}%)", format_compact(snap.context_used), format_compact(cap), ctx_pct)
+            format!("{} / {} ({:.1}%)", format_compact(snap.context_used), format_cap_label(cap), ctx_pct)
         } else {
-            format!("-- / {}", format_compact(cap))
+            format!("-- / {}", format_cap_label(cap))
         };
         draw_text(
             g,
@@ -1891,7 +1901,7 @@ impl AppState {
                 CMD_TOGGLE_TRANSPARENT,
                 to_wide(trans_lbl).as_ptr(),
             );
-            let cap_lbl = format!("切换上下文参考上限（当前 {}）", format_compact(self.current_cap()));
+            let cap_lbl = format!("切换上下文参考上限（当前 {}）", format_cap_label(self.current_cap()));
             AppendMenuW(hmenu, MF_STRING, CMD_CYCLE_CAP, to_wide(&cap_lbl).as_ptr());
             AppendMenuW(hmenu, MF_SEPARATOR, 0, null());
             AppendMenuW(hmenu, MF_STRING, CMD_PRESET_TOPBAR, to_wide("吸附位置：顶栏胶囊（默认）").as_ptr());
@@ -2211,6 +2221,11 @@ fn run_self_test(report_path: Option<&str>) -> i32 {
     assert_check(
         ws_mb > 0.0 && ws_mb < 15.0,
         format!("Lightweight Working Set RAM = {:.2} MB (< 15 MB target)", ws_mb),
+    );
+
+    assert_check(
+        CAP_PRESETS.contains(&512_000) && format_cap_label(512_000) == "512K",
+        format!("512K preset supported -> presets={:?}, label={}", CAP_PRESETS, format_cap_label(512_000)),
     );
 
     if let Some(p) = report_path {
